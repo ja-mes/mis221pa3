@@ -277,19 +277,20 @@ namespace Arrays1
             GillScreen();
             PlayGame();
         }
-        void Init(bool displayHeader = true)
-        {
-            if (displayHeader)
-                Utils.BuildScreen("Card Shark");
-            else
-                Console.Clear();
-        }
 
         void GillScreen(bool error = false)
         {
-            Init();
+            Utils.BuildScreen("Card Shark");
 
-            if(error)
+            Console.WriteLine();
+            Console.WriteLine("Welcome to Card Shark! This game uses a row of 10 cards to play.\n" +
+                              "○ You must make it through at least 5 cards to break even.\n" +
+                              "○ If you make it through 7 you will double your gil.\n" +
+                              "○ If you make it through all 10 you will triple your gil.\n");
+            Console.WriteLine();
+            Utils.Divider('_', 50);
+
+            if (error)
             {
                 Console.WriteLine("Invalid entry");
             }
@@ -323,7 +324,7 @@ namespace Arrays1
                 deck.PrintRowSplit(cards);
 
                 Console.WriteLine();
-                Console.WriteLine("Gil you are risking: " + gilToRisk.ToString("F"));
+                Console.WriteLine("You are risking " + gilToRisk.ToString("F") + " gil.");
                 Console.WriteLine();
                 Console.WriteLine();
 
@@ -382,18 +383,28 @@ namespace Arrays1
             if(correctCount < 4)
             {
                 Console.WriteLine("YOU BUST!");
+                Console.WriteLine($"You lost {gilToRisk.ToString("F")} gil");
+                Controller.playerGil -= gilToRisk;
             }
             else if(correctCount <= 5)
             {
                 Console.WriteLine("YOU BROKE EVEN");
+                Console.WriteLine($"You won 0 gil");
+                // don't need to touch the gil here
             }
             else if(correctCount < 9)
             {
                 Console.WriteLine("YOU DOUBLED YOUR GIL!");
+                Console.WriteLine($"You won {gilToRisk.ToString("F")} gil");
+                Controller.playerGil += (gilToRisk);
             }
             else if(correctCount == 9)
             {
                 Console.WriteLine("YOU TRIPLED YOUR GIL");
+                Controller.playerGil -= gilToRisk;
+                gilToRisk *= 3;
+                Controller.playerGil += gilToRisk;
+                Console.WriteLine($"You won {gilToRisk.ToString("F")} gil");
             }
 
 
@@ -403,7 +414,7 @@ namespace Arrays1
             string[] exitOptions =
             {
                 "Play Again",
-                "Exit"
+                "Back"
             };
             menu = new Menu(exitOptions);
 
@@ -413,7 +424,7 @@ namespace Arrays1
                     Render();
                     break;
                 case 2:
-                    new MainScreen().Render();
+                    Controller.Render();
                     break;
             }
 
@@ -423,18 +434,25 @@ namespace Arrays1
     }
 
 
-    class MainScreen
+    static class Controller
     {
-        string[] menuItems =
+        static public double playerGil = 50; // player starts with 50 gil
+
+        static string[] menuItems =
         {
             "Card Shark",
             "Shut the Box",
             "Exit",
         };
 
-        public void Render()
+        static public void Render()
         {
             Utils.BuildScreen("Games");
+
+            Console.WriteLine();
+            Console.WriteLine($"You currently have {playerGil.ToString("F")} gil");
+            Console.WriteLine();
+
                 
             Menu menu = new Menu(menuItems);
 
@@ -460,8 +478,7 @@ namespace Arrays1
             Console.OutputEncoding = System.Text.Encoding.UTF8; // needed to make card symbols appear
             Console.SetWindowSize(130, 35); // make sure we have room to show cards. TODO: adjust this
 
-            MainScreen mainScreen = new MainScreen();
-            mainScreen.Render();
+            Controller.Render();
 
             Console.ReadKey();
         }
