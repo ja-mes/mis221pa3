@@ -52,16 +52,39 @@ namespace Arrays1
     class Card
     {
         public string Suit { get; private set; }
-        public int Num { get; private set; }
+        private int _num;
+        public int Num { 
+            get
+            {
+                if (blackJack && FaceCard)
+                    return 10;
+                return _num;
+            }
+            set
+            {
+                _num = value;
+            }
+        }
         public string DisplayVal { get; private set; }
         public char Symbol { get; private set; }
         public string StringRep { get; private set; }
 
+        public bool blackJack = false;
+
         public bool hidden; // if the card is hidden we know not to show its value
+        public bool FaceCard 
+        {
+            get 
+            {
+                if(DisplayVal == "J" || DisplayVal == "Q" || DisplayVal == "K" || DisplayVal == "A") 
+                    return true;
+                return false;
+            }
+        }
 
         public Card(int num, string suit, bool hideCard = true)
         {
-            Num = num;
+            _num = num;
 
             if(suit == "clubs")
                 Symbol = '♣';
@@ -87,9 +110,11 @@ namespace Arrays1
     class Deck
     {
         public Card[] Cards { get; private set; }
+        public bool BlackJack { get; private set; }
 
-        public Deck()
+        public Deck(bool isBlackJack = false)
         {
+            BlackJack = isBlackJack;
             Cards = new Card[52];
             Build();
         }
@@ -107,6 +132,8 @@ namespace Arrays1
                 for (int j = 0; j < 13; j++)
                 {
                     Cards[k] = new Card(number[j], suits[i]);
+                    if (BlackJack)
+                        Cards[k].blackJack = true;
                     k++;
                 }
             }
@@ -889,14 +916,14 @@ namespace Arrays1
             Console.Clear();
             // print stuff for dealer
             Console.WriteLine();
-            Console.WriteLine("\tDEALER");
+            Console.WriteLine("DEALER");
             deck.PrintRow(dealerCards.ToArray());
             Console.WriteLine();
             Console.WriteLine();
 
 
             // print stuff for player
-            Console.WriteLine($"   Current Total: {playerTotal}");
+            Console.WriteLine($"Current Total: {playerTotal}");
             deck.PrintRow(playerCards.ToArray());
             Console.WriteLine();
         }
@@ -908,7 +935,7 @@ namespace Arrays1
             bool playerBust = false;
             int playerTotal = 0;
 
-            Deck deck = new Deck();
+            Deck deck = new Deck(true);
             Menu menu;
 
 
@@ -945,7 +972,7 @@ namespace Arrays1
 
                 if(input == 1)
                 {
-                    // definelty inefficient
+                    // inefficient
                     deck.Shuffle();
                     Card newC = deck.SelectCards(1)[0];
                     newC.hidden = false;
