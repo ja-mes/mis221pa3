@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+// TODO: fix bug where game gets stuck when user runs out of gil
+
 namespace Arrays1
 {
     static class Utils
@@ -274,32 +276,14 @@ namespace Arrays1
 
         public void Render()
         {
-            GillScreen();
+            string header = "Card Shark";
+           string description = "Welcome to Card Shark!\n" +
+                              "○ ...\n" +
+                              "○ ...\n" +
+                              "○ ...\n";
+
+            gilToRisk = Controller.GilScreen(header, description);
             PlayGame();
-        }
-
-        void GillScreen(bool error = false)
-        {
-            Utils.BuildScreen("Card Shark");
-
-            Console.WriteLine();
-            Console.WriteLine("Welcome to Card Shark! This game uses a row of 10 cards to play.\n" +
-                              "○ You must make it through at least 5 cards to break even.\n" +
-                              "○ If you make it through 7 you will double your gil.\n" +
-                              "○ If you make it through all 10 you will triple your gil.\n");
-            Console.WriteLine();
-            Utils.Divider('_', 50);
-
-            if (error)
-            {
-                Console.WriteLine("Invalid entry");
-            }
-
-            Console.Write("Enter amount of gil to risk: ");
-
-            if(!double.TryParse(Console.ReadLine(), out gilToRisk)) {
-                GillScreen(true);
-            }
         }
 
         void PlayGame()
@@ -324,7 +308,7 @@ namespace Arrays1
                 deck.PrintRowSplit(cards);
 
                 Console.WriteLine();
-                Console.WriteLine("You are risking " + gilToRisk.ToString("F") + " gil.");
+                Console.WriteLine("You are risking " + gilToRisk.ToString("F") + " gil");
                 Console.WriteLine();
                 Console.WriteLine();
 
@@ -378,7 +362,6 @@ namespace Arrays1
             deck.PrintRowSplit(cards);
 
             Console.WriteLine();
-            Console.WriteLine();
 
             if(correctCount < 4)
             {
@@ -411,11 +394,18 @@ namespace Arrays1
             Console.WriteLine();
             Console.WriteLine();
 
-            string[] exitOptions =
+            string[] exitOptions = new string[2];
+
+            if(Controller.playerGil > 0)
             {
-                "Play Again",
-                "Back"
-            };
+                exitOptions[0] = "Play Again";
+                exitOptions[1] = "Exit";
+            }
+            else
+            {
+                exitOptions[0] = "Exit";
+            }
+
             menu = new Menu(exitOptions);
 
             switch(menu.GetInput())
@@ -433,50 +423,693 @@ namespace Arrays1
 
     }
 
+    class Tile
+    {
+        public int Num { get; private set; }
+        public bool turned;
+
+        public Tile(int num, bool isTurned = false)
+        {
+            Num = num;
+            turned = isTurned;
+        }
+    }
+
+    class TitleGenerator
+    {
+        public Tile[] tiles;
+
+        public void Generate(int num)
+        {
+            tiles = new Tile[num];
+
+            for(int i = 1; i <= num; i++)
+            {
+                tiles[i - 1] = new Tile(i);
+            }
+        }
+
+        public void PrintRow()
+        {
+            int count = tiles.Length;
+
+            // prototype for tile
+            string[] lines1 =
+            {
+                "┌─────┐",
+                "│  1  │",
+                "└─────┘",
+                "       ",
+                "       ",
+            };
+
+            string[] lines2 =
+            {
+                "       ",
+                "       ",
+                "┌─────┐",
+                "│  1  │",
+                "└─────┘",
+            };
+
+
+            string[] linesToUse = lines1;
+
+            const string SPACE = " ";
+
+            for(int i = 0; i < 5; i++) // each tile is 5 lines high
+            {
+                for(int j = 0; j < count; j++)
+                {
+                    if (tiles[j].turned)
+                        linesToUse = lines2;
+                    else
+                        linesToUse = lines1;
+
+                    if((linesToUse == lines1 && i == 1) || (linesToUse == lines2 && i == 3))
+                    {
+                        if(tiles[j].Num >= 10)
+                            Console.Write("│ {0}  │" + SPACE, tiles[j].Num);
+                        else
+                            Console.Write("│  {0}  │" + SPACE, tiles[j].Num);
+                    }
+                    else
+                    {
+                        Console.Write(linesToUse[i] + SPACE);
+                    }
+                }
+
+                Console.WriteLine();
+            }
+
+        }
+    }
+
+    class Dice
+    {
+        public int Num { get; private set; }
+        public string[] StringRep { get; private set; }
+
+        public Dice()
+        {
+            Roll();
+        }
+
+        public void Roll()
+        {
+            Num = new Random().Next(1, 7); // returns a num between 1 and 6
+            SetStringRep();
+        }
+        void SetStringRep()
+        {
+            string[] lines1 =
+            {
+               "+-------+" ,
+               "|       |" ,
+               "|   o   |" ,
+               "|       |" ,
+               "+-------+"
+            };
+
+            string[] lines2 =
+            {
+                "+-------+" ,
+                "| o     |" ,
+                "|       |" ,
+                "|     o |" ,
+                "+-------+"
+            };
+
+            string[] lines3 =
+            {
+                "+-------+" ,
+                "| o     |" ,
+                "|   o   |" ,
+                "|     o |" ,
+                "+-------+"
+            };
+
+            string[] lines4 =
+            {
+                  "+-------+" ,
+                  "| o   o |" ,
+                  "|       |" ,
+                  "| o   o |" ,
+                  "+-------+"
+            };
+
+            string[] lines5 =
+            {
+                 "+-------+" ,
+                 "| o   o |" ,
+                 "|   o   |" ,
+                 "| o   o |" ,
+                 "+-------+"
+            };
+
+            string[] lines6 =
+            {
+                  "+-------+" ,
+                  "| o   o |" ,
+                  "| o   o |" ,
+                  "| o   o |" ,
+                  "+-------+"
+            };
+
+            if(Num == 1)
+            {
+                StringRep = lines1;
+            }
+            else if(Num == 2)
+            {
+                StringRep = lines2;
+            }
+            else if(Num == 3)
+            {
+                StringRep = lines3;
+            }
+            else if(Num == 4)
+            {
+                StringRep = lines4;
+            }
+            else if(Num == 5)
+            {
+                StringRep = lines5;
+            }
+            else if(Num == 6)
+            {
+                StringRep = lines6;
+            }
+        }
+    }
+
+    class TwoDice
+    {
+        public Dice dice1;
+        public Dice dice2;
+        public TwoDice()
+        {
+            dice1 = new Dice();
+            dice2 = new Dice();
+        }
+
+        public void Roll()
+        {
+            dice1.Roll();
+            dice2.Roll();
+        }
+
+        public void Print()
+        {
+            string[] line1 = dice1.StringRep;
+            string[] line2 = dice2.StringRep;
+
+            const string SPACE = "  ";
+            for(int i = 0; i < 5; i++) // each dice 5 high
+            {
+                Console.Write(line1[i] + SPACE);
+                Console.Write(line2[i] + SPACE);
+                Console.WriteLine();
+            }
+        }
+    }
+
+    class ShutTheBox
+    {
+        double gilToRisk;
+
+        public void Render()
+        {
+            string header = "Shut the Box";
+            string description = "Welcome to Shut the Box!\n" +
+                              "○ ...\n" +
+                              "○ ...\n" +
+                              "○ ...\n";
+            gilToRisk = Controller.GilScreen(header, description);
+            PlayGame();
+        }
+
+        void PlayGame()
+        {
+            Menu menu;
+            TitleGenerator tileG = new TitleGenerator();
+            tileG.Generate(12);
+
+            TwoDice twoDice = new TwoDice();
+            bool gameGoing = true;
+
+            while(gameGoing)
+            {
+                twoDice.Roll();
+
+                int dice1 = twoDice.dice1.Num;
+                int dice2 = twoDice.dice2.Num;
+                int diceTotal = dice1 + dice2;
+
+
+                List<string> menuOptions = new List<string>();
+
+                List<string> choices = new List<string>();
+
+                gameGoing = false;
+                if(tileG.tiles[diceTotal - 1].turned == false)
+                {
+                    menuOptions.Add($"Turn tile {diceTotal}");
+                    choices.Add("total");
+                    gameGoing = true;
+                }
+                if(tileG.tiles[dice1 - 1].turned == false && 
+                    tileG.tiles[dice2 - 1].turned == false && 
+                    tileG.tiles[dice2 - 1].Num != tileG.tiles[dice1 -1].Num)
+                {
+                    menuOptions.Add($"Turn tile {dice1} and {dice2}");
+                    choices.Add("both");
+                    gameGoing = true;
+                }
+                if(tileG.tiles[dice1 -1].turned == false)
+                {
+                    menuOptions.Add($"Turn tile {dice1}");
+                    choices.Add("first");
+                    gameGoing = true;
+                }
+                if(tileG.tiles[dice2 -1].turned == false && tileG.tiles[dice2 - 1].Num != tileG.tiles[dice1 -1].Num)
+                {
+                    menuOptions.Add($"Turn tile {dice2}");
+                    choices.Add("second");
+                    gameGoing = true;
+                }
+
+                if (gameGoing == false)
+                    break;
+
+                Console.Clear();
+                tileG.PrintRow();
+                Utils.Divider('-', 100);
+                Console.WriteLine();
+                twoDice.Print();
+
+                string[] arr = menuOptions.ToArray();
+                menu = new Menu(arr);
+
+                Console.WriteLine();
+
+                // TODO: refactor this. 
+                switch(menu.GetInput())
+                {
+                    case 1:
+                        if(choices[0] == "total")
+                            tileG.tiles[diceTotal - 1].turned = true;
+                        else if(choices[0] == "both")
+                        {
+                            tileG.tiles[dice1 - 1].turned = true;
+                            tileG.tiles[dice2 - 1].turned = true;
+                        }
+                        else if(choices[0] == "first")
+                            tileG.tiles[dice1 - 1].turned = true;
+                        else if(choices[0] == "second") 
+                            tileG.tiles[dice2 - 1].turned = true;
+                        break;
+                    case 2:
+                        if(choices[1] == "total")
+                            tileG.tiles[diceTotal - 1].turned = true;
+                        else if(choices[1] == "both")
+                        {
+                            tileG.tiles[dice1 - 1].turned = true;
+                            tileG.tiles[dice2 - 1].turned = true;
+                        }
+                        else if(choices[1] == "first")
+                            tileG.tiles[dice1 - 1].turned = true;
+                        else if(choices[1] == "second") 
+                            tileG.tiles[dice2 - 1].turned = true;
+                        break;
+                    case 3:
+                        if(choices[2] == "total")
+                            tileG.tiles[diceTotal - 1].turned = true;
+                        else if(choices[2] == "both")
+                        {
+                            tileG.tiles[dice1 - 1].turned = true;
+                            tileG.tiles[dice2 - 1].turned = true;
+                        }
+                        else if(choices[2] == "first")
+                            tileG.tiles[dice1 - 1].turned = true;
+                        else if(choices[2] == "second") 
+                            tileG.tiles[dice2 - 1].turned = true;
+                        break;
+                    case 4:
+                        if(choices[3] == "total")
+                            tileG.tiles[diceTotal - 1].turned = true;
+                        else if(choices[3] == "both")
+                        {
+                            tileG.tiles[dice1 - 1].turned = true;
+                            tileG.tiles[dice2 - 1].turned = true;
+                        }
+                        else if(choices[3] == "first")
+                            tileG.tiles[dice1 - 1].turned = true;
+                        else if(choices[3] == "second") 
+                            tileG.tiles[dice2 - 1].turned = true;
+                        break;
+
+                }
+            }
+
+            Console.Clear();
+
+            tileG.PrintRow();
+            Utils.Divider('-', 100);
+            Console.WriteLine();
+            twoDice.Print();
+
+            Console.WriteLine();
+            Console.WriteLine("GAME OVER!");
+
+            int tileCount = 0;
+            foreach (Tile t in tileG.tiles)
+            {
+                if(t.turned == false)
+                {
+                    tileCount++;
+                }
+            }
+
+            Console.WriteLine($"There are {tileCount} tiles remaining");
+            Console.WriteLine();
+
+            if(tileCount >=3 && tileCount <= 6)
+            {
+                Console.WriteLine("Gil won: 0");
+                // no need to touch the gil
+            }
+            else if(tileCount >= 0 && tileCount <= 2)
+            {
+                Console.WriteLine($"Gil won: {gilToRisk}");
+                Controller.playerGil += gilToRisk;
+            }
+            else if(tileCount >= 7)
+            {
+                Console.WriteLine($"Gil lost: {gilToRisk}");
+                Controller.playerGil -= gilToRisk;
+            }
+
+            Console.WriteLine();
+
+            string[] exitOptions = new string[2];
+
+            if (Controller.playerGil > 0)
+            {
+                exitOptions[0] = "Play Again";
+                exitOptions[1] = "Exit";
+            }
+            else
+            {
+                exitOptions[0] = "Exit";
+            }
+
+            menu = new Menu(exitOptions);
+
+            switch(menu.GetInput())
+            {
+                case 1:
+                    Render();
+                    break;
+                case 2:
+                    Controller.Render();
+                    break;
+            }
+        }
+    }
+
+    class BlackJack
+    {
+        double bet = 0;
+
+        public void Render()
+        {
+            GilScreen();
+            PlayGame();
+        }
+
+        void GilScreen()
+        {
+            Utils.BuildScreen("Black Jack");
+
+            Console.WriteLine("Welcome to Black Jack!");
+            Console.WriteLine();
+            Console.WriteLine("Press any key to continue");
+
+            Console.ReadKey();
+
+        }
+
+        void GetBet(bool error = false)
+        {
+            Console.Clear();
+
+            Utils.BuildScreen("Black Jack");
+
+            if(error)
+            {
+                Console.WriteLine("Invalid entry");
+            }
+            Console.WriteLine();
+            Console.WriteLine($"You currently have {Controller.playerGil.ToString("F")} gil");
+            Console.WriteLine();
+
+            Console.Write("Gil to bet: ");
+
+            if(!double.TryParse(Console.ReadLine(), out bet) || bet <= 0 || bet > Controller.playerGil)
+            {
+                GetBet(true);
+            }
+
+        }
+
+        void BuildScreen(Deck deck, int playerTotal, List<Card> dealerCards, List<Card> playerCards)
+        {
+
+            Console.Clear();
+            // print stuff for dealer
+            Console.WriteLine();
+            Console.WriteLine("\tDEALER");
+            deck.PrintRow(dealerCards.ToArray());
+            Console.WriteLine();
+            Console.WriteLine();
+
+
+            // print stuff for player
+            Console.WriteLine($"   Current Total: {playerTotal}");
+            deck.PrintRow(playerCards.ToArray());
+            Console.WriteLine();
+        }
+
+        void PlayGame()
+        {
+            GetBet();
+
+            bool playerBust = false;
+            int playerTotal = 0;
+
+            Deck deck = new Deck();
+            Menu menu;
+
+
+            // get the cards to play with
+            deck.Shuffle();
+            Card[] playCards = deck.SelectCards(4);
+
+            List<Card> dealerCards = playCards.Take(playCards.Length / 2).ToList();
+            // we want one of the dealer cards to be visible
+            dealerCards[0].hidden = false;
+
+            List<Card> playerCards = playCards.Skip(playCards.Length / 2).ToList() ;
+            // we want both the player cards to be visible
+            playerCards[0].hidden = false; 
+            playerCards[1].hidden = false;
+
+            playerTotal = 0;
+            foreach (Card c in playerCards)
+            {
+                playerTotal += c.Num;
+            }
+
+            while(!playerBust)
+            {
+                BuildScreen(deck, playerTotal, dealerCards, playerCards);
+
+                string[] menuOptions =
+                {
+                    "Hit",
+                    "Stand"
+                };
+                menu = new Menu(menuOptions);
+                int input = menu.GetInput();
+
+                if(input == 1)
+                {
+                    // definelty inefficient
+                    deck.Shuffle();
+                    Card newC = deck.SelectCards(1)[0];
+                    newC.hidden = false;
+                    playerCards.Add(newC);
+                       
+                    playerTotal = 0;
+                    foreach (Card c in playerCards)
+                    {
+                        playerTotal += c.Num;
+                    }
+
+                    if(playerTotal > 21)
+                    {
+                        playerBust = true;
+                        BuildScreen(deck, playerTotal, dealerCards, playerCards);
+                        Console.WriteLine("YOU BUST!");
+                    }
+
+                }
+                else if(input == 2)
+                {
+                    break;
+                }
+
+            }
+
+        }
+    }
 
     static class Controller
     {
         static public double playerGil = 50; // player starts with 50 gil
+        public const double GIL_GOAL = 300;
 
         static string[] menuItems =
         {
             "Card Shark",
             "Shut the Box",
+            "Black Jack",
             "Exit",
         };
 
         static public void Render()
         {
             Utils.BuildScreen("Games");
+            Menu menu;
 
             Console.WriteLine();
+
+            if(playerGil <= 0)
+            {
+                string[] exitMenu = { 
+                    "Reset Games and Play Again",
+                    "Exit",
+                };
+                Console.WriteLine($"You have {playerGil} gil! You can no longer play.");
+
+                menu = new Menu(exitMenu);
+
+                switch(menu.GetInput())
+                {
+                    case 1:
+                        Reset();
+                        Render();
+                        break;
+                    case 2:
+                        Utils.Exit();
+                        break;
+                }
+
+            }
+
             Console.WriteLine($"You currently have {playerGil.ToString("F")} gil");
+            if (playerGil < GIL_GOAL)
+                Console.WriteLine($"You need {GIL_GOAL - playerGil} more gil to reach your goal of {GIL_GOAL} gil");
+            else
+                Console.WriteLine($"You reached your goal of {GIL_GOAL}!");
+
+
+           menu = new Menu(menuItems);
+
             Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("Choose a game: ");
 
-                
-            Menu menu = new Menu(menuItems);
-
-            switch(menu.GetInput())
+            switch (menu.GetInput())
             {
                 case 1:
                     new CardShark().Render();
                     break;
                 case 2:
+                    new ShutTheBox().Render();
                     break;
                 case 3:
+                    new BlackJack().Render();
+                    break;
+                case 4:
                     Utils.Exit();
                     break;
             }
         }
-    }
+        static public double GilScreen(string header, string description, bool error = false, bool toSmall = false, bool toMuch = false)
+        {
+            double gilToRisk;
 
+            Utils.BuildScreen(header);
+
+            Console.WriteLine();
+            Console.WriteLine(description);
+            Console.WriteLine();
+            Utils.Divider('_', 50);
+
+            Console.WriteLine();
+            Console.WriteLine($"You currently have {Controller.playerGil} gil");
+            Console.WriteLine();
+
+
+            if (error)
+            {
+                Console.WriteLine("Invalid entry");
+            }
+            else if(toSmall)
+            {
+                Console.WriteLine("You cannot risk 0 gil!");
+            }
+            else if(toMuch)
+            {
+                Console.WriteLine("You cannot risk more gil than you have!");
+            }
+
+            Console.Write("Enter amount of gil to risk: ");
+
+            if(!double.TryParse(Console.ReadLine(), out gilToRisk)) {
+                GilScreen(header, description, true);
+            }
+
+            if(gilToRisk <= 0)
+            {
+                GilScreen(header, description, false, true);
+            }
+
+            if(gilToRisk > Controller.playerGil)
+            {
+                GilScreen(header, description, false, false, true);
+            }
+
+            if(Controller.playerGil <= 0)
+                Controller.Render();
+
+            return gilToRisk;
+        }
+
+        private static void Reset()
+        {
+            playerGil = 50;
+        }
+    }
 
     class Program
     {
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8; // needed to make card symbols appear
-            Console.SetWindowSize(130, 35); // make sure we have room to show cards. TODO: adjust this
+            Console.SetWindowSize(130, 35); // make sure we have room to stuff. TODO: adjust this
 
             Controller.Render();
 
