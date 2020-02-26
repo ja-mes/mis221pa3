@@ -2,16 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 
-// TODO: fix bug where game gets stuck when user runs out of gil
-
 namespace Arrays1
 {
+    /* 
+     * Utility class for random stuff used throughout the code. Most of this taken from PA2 
+     */
     static class Utils
     {
-
-        /*
-         * Divider creates a line accross the screen with the specified char
-         */
+        /* Divider creates a line accross the screen with the specified char */
         public static void Divider(char c, int length)
         {
             string outputStr = "";
@@ -21,9 +19,7 @@ namespace Arrays1
             Console.WriteLine(outputStr);
         }
 
-        /*
-         * The BuildScreen method first clears the terminal, and then builds a header with a optional subheader
-         */
+        /* The BuildScreen method first clears the terminal, and then builds a header with a optional subheader */
         public static void BuildScreen(string title, string subHeader = null)
         {
             Console.Clear(); // clear the screen
@@ -40,214 +36,18 @@ namespace Arrays1
             Divider('-', 50);
         }
 
-        /*
-         * The Exit method prints to the screen and terminates the program
-         */
+        /* The Exit method terminates the program */
         public static void Exit() // TODO: allow custom exit messages
         {
             System.Environment.Exit(0);
         }
 
     }
-    class Card
-    {
-        public string Suit { get; private set; }
-        private int _num;
-        public int Num { 
-            get
-            {
-                if (blackJack && FaceCard)
-                    return 10;
-                return _num;
-            }
-            set
-            {
-                _num = value;
-            }
-        }
-        public string DisplayVal { get; private set; }
-        public char Symbol { get; private set; }
-        public string StringRep { get; private set; }
-
-        public bool blackJack = false;
-
-        public bool hidden; // if the card is hidden we know not to show its value
-        public bool FaceCard 
-        {
-            get 
-            {
-                if(DisplayVal == "J" || DisplayVal == "Q" || DisplayVal == "K" || DisplayVal == "A") 
-                    return true;
-                return false;
-            }
-        }
-
-        public Card(int num, string suit, bool hideCard = true)
-        {
-            _num = num;
-
-            if(suit == "clubs")
-                Symbol = '♣';
-            else if(suit == "diamonds")
-                Symbol = '♦';
-            else if(suit == "hearts")
-                Symbol = '♥';
-            else if(suit == "spades")
-                Symbol = '♠';
-            else
-                throw new Exception("Invalid suit");
-
-            Suit = suit;
-            hidden = hideCard;
-
-            string[] vals = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
-            DisplayVal = vals[Num - 1];
-
-            StringRep = $"{DisplayVal} of {Suit}";
-        }
-    }
-
-    class Deck
-    {
-        public Card[] Cards { get; private set; }
-        public bool BlackJack { get; private set; }
-
-        public Deck(bool isBlackJack = false)
-        {
-            BlackJack = isBlackJack;
-            Cards = new Card[52];
-            Build();
-        }
-
-        /* Build creates a deck of 52 cards */
-        public void Build()
-        {
-            string[] suits = { "clubs", "diamonds", "hearts", "spades" };
-            int[] number = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
-
-            int k = 0;
-
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 13; j++)
-                {
-                    Cards[k] = new Card(number[j], suits[i]);
-                    if (BlackJack)
-                        Cards[k].blackJack = true;
-                    k++;
-                }
-            }
-
-        }
-
-        public void Shuffle()
-        {
-            Random random = new Random();
-            int n = Cards.Length;
-
-            for (int i = 0; i < (n - 1); i++)
-            {
-                int r = i + random.Next(n - i);
-                Card c = Cards[r];
-                Cards[r] = Cards[i];
-                Cards[i] = c;
-            }
-
-        }
-        
-        /* SelectCards selects the specified number of cards from the deck*/ 
-        public Card[] SelectCards(int numCards)
-        {
-            Card[] selectedCards = new Card[numCards];
-            Array.Copy(Cards, 0, selectedCards, 0, numCards);
-
-            return selectedCards;
-
-        }
-
-
-        /* Prints the array of cards on 2 lines instead of */
-        public void PrintRowSplit(Card[] cards)
-        {
-            Card[] array1 = cards.Take(cards.Length / 2).ToArray();
-            Card[] array2 = cards.Skip(cards.Length / 2).ToArray();
-
-            PrintRow(array1);
-            PrintRow(array2);
-        }
-
-        /* Print row accepts an array of cards and prints them horrizontally across the screen */
-        public void PrintRow(Card[] cards)
-        {
-            int count = cards.Length;
-
-            // this is the skelton for each card
-            string[] lines =
-            {
-                "┌─────────┐",
-                "│{}       │",
-                "│         │",
-                "│    {}   │",
-                "│         │",
-                "│         │",
-                "│       {}│",
-                "└─────────┘",
-            };
-
-            string[] hiddenLines =
-                {
-                "┌─────────┐",
-                "│░░░░░░░░░│",
-                "│░░░░░░░░░│",
-                "│░░░░░░░░░│",
-                "│░░░░░░░░░│",
-                "│░░░░░░░░░│",
-                "│░░░░░░░░░│",
-                "└─────────┘",
-            };
-
-            const string SPACE = "  ";
-
-            for (int i = 0; i < 8; i++) // each card is 8 lines high
-            {
-                for (int j = 0; j < count; j++)
-                {
-                    if (cards[j].hidden)
-                    {
-                        Console.Write(hiddenLines[i] + SPACE);
-                        continue;
-                    }
-
-                    if (i == 1)
-                    {
-                        if(cards[j].DisplayVal.Length >= 2)
-                            Console.Write("│{0}       │" + SPACE, cards[j].DisplayVal);
-                        else
-                            Console.Write("│{0}        │" + SPACE, cards[j].DisplayVal);
-                    }
-                    else if (i == 3)
-                    {
-                        Console.Write("│    {0}    │" + SPACE, cards[j].Symbol);
-                    }
-                    else if (i == 6)
-                    {
-                        if(cards[j].DisplayVal.Length >= 2)
-                            Console.Write("│       {0}│" + SPACE, cards[j].DisplayVal);
-                        else 
-                            Console.Write("│        {0}│" + SPACE, cards[j].DisplayVal);
-                    }
-                    else
-                    {
-                        Console.Write(lines[i] + SPACE);
-                    }
-                }
-
-                Console.WriteLine();
-            }
-
-        }
-    }
-
+    
+    /* 
+     * Menu handles every menu in the program. Took this from my PA2 code
+     * Error checking is built in
+     */
     class Menu
     {
         private bool error;
@@ -296,6 +96,228 @@ namespace Arrays1
         }
     }
 
+
+
+    /* 
+     * Card is the individual cards. The Deck class will be used to generate arrays of cards
+     * This basically stores the properties for each individual card.
+     * CardShark and BlackJack use this class extensively. 
+     */
+    class Card
+    {
+        public string Suit { get; private set; }
+        private int _num;
+
+        /* if we are using this card for blackjack all facecards have a value of 10 by default 
+         * aces will end up with either 1 or 11 but the BlackJack class assigns a value dynamically at runtime */
+        public int Num
+        {
+            get
+            {
+                if (blackJack && FaceCard)
+                    return 10;
+                return _num;
+            }
+            set
+            {
+                _num = value;
+            }
+        }
+        public string DisplayVal { get; private set; }
+        public char Symbol { get; private set; }
+        public string StringRep { get; private set; }
+
+        public bool blackJack = false;
+
+        public bool hidden; // if the card is hidden we know not to show its value
+
+        /* is this a face card? */
+        public bool FaceCard
+        {
+            get
+            {
+                if (DisplayVal == "J" || DisplayVal == "Q" || DisplayVal == "K" || DisplayVal == "A")
+                    return true;
+                return false;
+            }
+        }
+
+        public Card(int num, string suit, bool hideCard = true)
+        {
+            _num = num;
+
+            if (suit == "clubs")
+                Symbol = '♣';
+            else if (suit == "diamonds")
+                Symbol = '♦';
+            else if (suit == "hearts")
+                Symbol = '♥';
+            else if (suit == "spades")
+                Symbol = '♠';
+            else
+                throw new Exception("Invalid suit");
+
+            Suit = suit;
+            hidden = hideCard;
+
+            string[] vals = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+            DisplayVal = vals[Num - 1];
+
+            StringRep = $"{DisplayVal} of {Suit}";
+        }
+    }
+
+    /* 
+     * Deck handles an array of 52 cards.
+     * Used for building a deck, shuffling, selecting cards, and printing cards
+     */
+    class Deck
+    {
+        public Card[] Cards { get; private set; }
+        public bool BlackJack { get; private set; }
+
+        public Deck(bool isBlackJack = false)
+        {
+            BlackJack = isBlackJack;
+            Cards = new Card[52];
+            Build();
+        }
+
+        /* Build creates a deck of 52 cards */
+        public void Build()
+        {
+            string[] suits = { "clubs", "diamonds", "hearts", "spades" };
+            int[] number = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+
+            int k = 0;
+
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 13; j++)
+                {
+                    Cards[k] = new Card(number[j], suits[i]);
+                    if (BlackJack)
+                        Cards[k].blackJack = true;
+                    k++;
+                }
+            }
+
+        }
+
+        /* Shuffle the array of cards. Fisher-Yates. this will be efficent enough with an array of length 52 to call repeatedly */
+        public void Shuffle()
+        {
+            Random random = new Random();
+            int n = Cards.Length;
+
+            for (int i = 0; i < (n - 1); i++)
+            {
+                int r = i + random.Next(n - i);
+                Card c = Cards[r];
+                Cards[r] = Cards[i];
+                Cards[i] = c;
+            }
+
+        }
+
+        /* SelectCards selects the specified number of cards from the deck*/
+        public Card[] SelectCards(int numCards)
+        {
+            Card[] selectedCards = new Card[numCards];
+            Array.Copy(Cards, 0, selectedCards, 0, numCards);
+
+            return selectedCards;
+
+        }
+
+
+        /* Prints the array of cards on 2 lines */
+        public void PrintRowSplit(Card[] cards)
+        {
+            Card[] array1 = cards.Take(cards.Length / 2).ToArray();
+            Card[] array2 = cards.Skip(cards.Length / 2).ToArray();
+
+            PrintRow(array1);
+            PrintRow(array2);
+        }
+
+        /* Print row accepts an array of cards and prints them horrizontally across the screen */
+        public void PrintRow(Card[] cards)
+        {
+            int count = cards.Length;
+
+            // this is the skelton for each card
+            string[] lines =
+            {
+                "┌─────────┐",
+                "│         │",
+                "│         │",
+                "│         │",
+                "│         │",
+                "│         │",
+                "│         │",
+                "└─────────┘",
+            };
+
+            // hidden card. 
+            string[] hiddenLines =
+                {
+                "┌─────────┐",
+                "│░░░░░░░░░│",
+                "│░░░░░░░░░│",
+                "│░░░░░░░░░│",
+                "│░░░░░░░░░│",
+                "│░░░░░░░░░│",
+                "│░░░░░░░░░│",
+                "└─────────┘",
+            };
+
+            const string SPACE = "  ";
+
+            // build the cards. this basically loops through every card for each line of the card
+            for (int i = 0; i < 8; i++) // each card is 8 lines high
+            {
+                for (int j = 0; j < count; j++)
+                {
+                    if (cards[j].hidden)
+                    {
+                        Console.Write(hiddenLines[i] + SPACE);
+                        continue;
+                    }
+
+                    if (i == 1)
+                    {
+                        if (cards[j].DisplayVal.Length >= 2)
+                            Console.Write("│{0}       │" + SPACE, cards[j].DisplayVal);
+                        else
+                            Console.Write("│{0}        │" + SPACE, cards[j].DisplayVal);
+                    }
+                    else if (i == 3)
+                    {
+                        Console.Write("│    {0}    │" + SPACE, cards[j].Symbol);
+                    }
+                    else if (i == 6)
+                    {
+                        if (cards[j].DisplayVal.Length >= 2)
+                            Console.Write("│       {0}│" + SPACE, cards[j].DisplayVal);
+                        else
+                            Console.Write("│        {0}│" + SPACE, cards[j].DisplayVal);
+                    }
+                    else
+                    {
+                        Console.Write(lines[i] + SPACE);
+                    }
+                }
+
+                Console.WriteLine();
+            }
+
+        }
+    }
+
+    /* 
+     * This class handles rendering and playing the Card Shark game
+     */
     class CardShark
     {
 
@@ -304,15 +326,15 @@ namespace Arrays1
         public void Render()
         {
             string header = "Card Shark";
-           string description = "Welcome to Card Shark!\n" +
-                              "○ ...\n" +
-                              "○ ...\n" +
-                              "○ ...\n";
+            string description = "○ Card shark uses a row of 10 cards to play.\n\n" +
+                                 "○ You will guess whether the next card has a value under or over the previous card.\n\n" +
+                                 "○ The goal is to make it through all 10 cards. \n";
 
             gilToRisk = Controller.GetBet(header, description);
             PlayGame();
         }
 
+        /* Handles actually playing the game. TODO: break this into smaller functions. this is confusing */
         void PlayGame()
         {
             Menu menu;
@@ -326,7 +348,7 @@ namespace Arrays1
             int correctCount = 0;
 
             int i; // want to know the stoping point outside loop
-            for(i = 0; i < 9; i++)
+            for (i = 0; i < 9; i++)
             {
                 Console.Clear();
 
@@ -336,7 +358,6 @@ namespace Arrays1
 
                 Console.WriteLine();
                 Console.WriteLine("You are risking " + gilToRisk.ToString("F") + " gil");
-                Console.WriteLine();
                 Console.WriteLine();
 
                 Console.WriteLine("Your guess: ");
@@ -349,9 +370,9 @@ namespace Arrays1
                 int selection = menu.GetInput();
 
 
-                if(cards[i].Num > cards[i + 1].Num) // the next card is less than the current card. user should have selected 1
+                if (cards[i].Num > cards[i + 1].Num) // the next card is less than the current card. user should have selected 1
                 {
-                    if(selection == 1)
+                    if (selection == 1)
                     {
                         correctCount++;
                     }
@@ -360,13 +381,13 @@ namespace Arrays1
                         break;
                     }
                 }
-                else if(cards[i].Num == cards[i + 1].Num)
+                else if (cards[i].Num == cards[i + 1].Num)
                 {
                     correctCount++;
                 }
                 else
                 {
-                    if(selection == 2)
+                    if (selection == 2)
                     {
                         correctCount++;
                     }
@@ -390,25 +411,25 @@ namespace Arrays1
 
             Console.WriteLine();
 
-            if(correctCount < 4)
+            if (correctCount < 4)
             {
                 Console.WriteLine("YOU BUST!");
                 Console.WriteLine($"You lost {gilToRisk.ToString("F")} gil");
                 Controller.playerGil -= gilToRisk;
             }
-            else if(correctCount <= 5)
+            else if (correctCount <= 5)
             {
                 Console.WriteLine("YOU BROKE EVEN");
                 Console.WriteLine($"You won 0 gil");
                 // don't need to touch the gil here
             }
-            else if(correctCount < 9)
+            else if (correctCount < 9)
             {
                 Console.WriteLine("YOU DOUBLED YOUR GIL!");
                 Console.WriteLine($"You won {gilToRisk.ToString("F")} gil");
                 Controller.playerGil += (gilToRisk);
             }
-            else if(correctCount == 9)
+            else if (correctCount == 9)
             {
                 Console.WriteLine("YOU TRIPLED YOUR GIL");
                 Controller.playerGil -= gilToRisk;
@@ -424,10 +445,10 @@ namespace Arrays1
             string[] exitOptions = new string[2];
 
             exitOptions[0] = "Play Again";
-            exitOptions[1] = "Exit";
+            exitOptions[1] = "Back";
             menu = new Menu(exitOptions);
 
-            switch(menu.GetInput())
+            switch (menu.GetInput())
             {
                 case 1:
                     if (Controller.playerGil > 0)
@@ -445,6 +466,10 @@ namespace Arrays1
 
     }
 
+    /* 
+     * Tile: this is the individual tile. all we need to know is its value and whether or not it is turned
+     * all this class is super simple, it makes the tile stuff much easier to work with 
+     */
     class Tile
     {
         public int Num { get; private set; }
@@ -457,20 +482,25 @@ namespace Arrays1
         }
     }
 
-    class TitleGenerator
+    /* 
+     * TitleGenerator handles building and printing rows of tiles
+     */
+    class TileGenerator
     {
         public Tile[] tiles;
 
+        /* Generate builds a Tile array of the specified number of tiles */
         public void Generate(int num)
         {
             tiles = new Tile[num];
 
-            for(int i = 1; i <= num; i++)
+            for (int i = 1; i <= num; i++)
             {
                 tiles[i - 1] = new Tile(i);
             }
         }
 
+        /* I have no idea how this works */
         public void PrintRow()
         {
             int count = tiles.Length;
@@ -499,18 +529,18 @@ namespace Arrays1
 
             const string SPACE = " ";
 
-            for(int i = 0; i < 5; i++) // each tile is 5 lines high
+            for (int i = 0; i < 5; i++) // each tile is 5 lines high
             {
-                for(int j = 0; j < count; j++)
+                for (int j = 0; j < count; j++)
                 {
                     if (tiles[j].turned)
                         linesToUse = lines2;
                     else
                         linesToUse = lines1;
 
-                    if((linesToUse == lines1 && i == 1) || (linesToUse == lines2 && i == 3))
+                    if ((linesToUse == lines1 && i == 1) || (linesToUse == lines2 && i == 3))
                     {
-                        if(tiles[j].Num >= 10)
+                        if (tiles[j].Num >= 10)
                             Console.Write("│ {0}  │" + SPACE, tiles[j].Num);
                         else
                             Console.Write("│  {0}  │" + SPACE, tiles[j].Num);
@@ -527,6 +557,10 @@ namespace Arrays1
         }
     }
 
+    /* 
+     * Dice stores the properties for each die and rolls individual dice. 
+     * The string representation of each die is stored as an array with each line so we can print them later
+     */
     class Dice
     {
         public int Num { get; private set; }
@@ -537,11 +571,14 @@ namespace Arrays1
             Roll();
         }
 
+        /* Each dice has a value from 1-6 */
         public void Roll()
         {
             Num = new Random().Next(1, 7); // returns a num between 1 and 6
             SetStringRep();
         }
+
+        /* Set the string representation based on the value */
         void SetStringRep()
         {
             string[] lines1 =
@@ -598,56 +635,64 @@ namespace Arrays1
                   "+-------+"
             };
 
-            if(Num == 1)
+            if (Num == 1)
             {
                 StringRep = lines1;
             }
-            else if(Num == 2)
+            else if (Num == 2)
             {
                 StringRep = lines2;
             }
-            else if(Num == 3)
+            else if (Num == 3)
             {
                 StringRep = lines3;
             }
-            else if(Num == 4)
+            else if (Num == 4)
             {
                 StringRep = lines4;
             }
-            else if(Num == 5)
+            else if (Num == 5)
             {
                 StringRep = lines5;
             }
-            else if(Num == 6)
+            else if (Num == 6)
             {
                 StringRep = lines6;
             }
         }
     }
 
+    /* 
+     * TwoDice makes working with 2 dice easier for ShutTheBox
+     * handles rolling and printing 2 dice at a time
+     */
     class TwoDice
     {
         public Dice dice1;
         public Dice dice2;
+
+        /* Generate the two dice when the class is constructed */
         public TwoDice()
         {
             dice1 = new Dice();
             dice2 = new Dice();
         }
 
+        /* Roll both the dice */
         public void Roll()
         {
             dice1.Roll();
             dice2.Roll();
         }
 
+        /* Print the dice side by side on the screen */
         public void Print()
         {
             string[] line1 = dice1.StringRep;
             string[] line2 = dice2.StringRep;
 
             const string SPACE = "  ";
-            for(int i = 0; i < 5; i++) // each dice 5 high
+            for (int i = 0; i < 5; i++) // each dice 5 high
             {
                 Console.Write(line1[i] + SPACE);
                 Console.Write(line2[i] + SPACE);
@@ -656,6 +701,9 @@ namespace Arrays1
         }
     }
 
+    /* 
+     * ShutTheBox handles the rendering and game play for shut the box game. Uses the tile and dice classes
+     */
     class ShutTheBox
     {
         double gilToRisk;
@@ -663,24 +711,26 @@ namespace Arrays1
         public void Render()
         {
             string header = "Shut the Box";
-            string description = "Welcome to Shut the Box!\n" +
-                              "○ ...\n" +
-                              "○ ...\n" +
-                              "○ ...\n";
+            string description = "○ Shut the Box is played with two dice and 12 tiles.\n\n" +
+                              "○ The object of the game is to turn over all 12 tiles\n\n" +
+                              "○ After each dice roll, you have the option to either turn over the tile representing the sum of the dice,\n" +
+                              "  or turning over one or both of the tiles corresponding to the individual die values. \n";
             gilToRisk = Controller.GetBet(header, description);
             PlayGame();
         }
 
+
+        /* PlayGame handles the game play. needs to be split up into smaller methods to make code more readable */
         void PlayGame()
         {
             Menu menu;
-            TitleGenerator tileG = new TitleGenerator();
+            TileGenerator tileG = new TileGenerator();
             tileG.Generate(12);
 
             TwoDice twoDice = new TwoDice();
             bool gameGoing = true;
 
-            while(gameGoing)
+            while (gameGoing)
             {
                 twoDice.Roll();
 
@@ -694,27 +744,27 @@ namespace Arrays1
                 List<string> choices = new List<string>();
 
                 gameGoing = false;
-                if(tileG.tiles[diceTotal - 1].turned == false)
+                if (tileG.tiles[diceTotal - 1].turned == false)
                 {
                     menuOptions.Add($"Turn tile {diceTotal}");
                     choices.Add("total");
                     gameGoing = true;
                 }
-                if(tileG.tiles[dice1 - 1].turned == false && 
-                    tileG.tiles[dice2 - 1].turned == false && 
-                    tileG.tiles[dice2 - 1].Num != tileG.tiles[dice1 -1].Num)
+                if (tileG.tiles[dice1 - 1].turned == false &&
+                    tileG.tiles[dice2 - 1].turned == false &&
+                    tileG.tiles[dice2 - 1].Num != tileG.tiles[dice1 - 1].Num)
                 {
                     menuOptions.Add($"Turn tile {dice1} and {dice2}");
                     choices.Add("both");
                     gameGoing = true;
                 }
-                if(tileG.tiles[dice1 -1].turned == false)
+                if (tileG.tiles[dice1 - 1].turned == false)
                 {
                     menuOptions.Add($"Turn tile {dice1}");
                     choices.Add("first");
                     gameGoing = true;
                 }
-                if(tileG.tiles[dice2 -1].turned == false && tileG.tiles[dice2 - 1].Num != tileG.tiles[dice1 -1].Num)
+                if (tileG.tiles[dice2 - 1].turned == false && tileG.tiles[dice2 - 1].Num != tileG.tiles[dice1 - 1].Num)
                 {
                     menuOptions.Add($"Turn tile {dice2}");
                     choices.Add("second");
@@ -735,59 +785,59 @@ namespace Arrays1
 
                 Console.WriteLine();
 
-                // TODO: refactor this. 
-                switch(menu.GetInput())
+                // TODO: wtf is this
+                switch (menu.GetInput())
                 {
                     case 1:
-                        if(choices[0] == "total")
+                        if (choices[0] == "total")
                             tileG.tiles[diceTotal - 1].turned = true;
-                        else if(choices[0] == "both")
+                        else if (choices[0] == "both")
                         {
                             tileG.tiles[dice1 - 1].turned = true;
                             tileG.tiles[dice2 - 1].turned = true;
                         }
-                        else if(choices[0] == "first")
+                        else if (choices[0] == "first")
                             tileG.tiles[dice1 - 1].turned = true;
-                        else if(choices[0] == "second") 
+                        else if (choices[0] == "second")
                             tileG.tiles[dice2 - 1].turned = true;
                         break;
                     case 2:
-                        if(choices[1] == "total")
+                        if (choices[1] == "total")
                             tileG.tiles[diceTotal - 1].turned = true;
-                        else if(choices[1] == "both")
+                        else if (choices[1] == "both")
                         {
                             tileG.tiles[dice1 - 1].turned = true;
                             tileG.tiles[dice2 - 1].turned = true;
                         }
-                        else if(choices[1] == "first")
+                        else if (choices[1] == "first")
                             tileG.tiles[dice1 - 1].turned = true;
-                        else if(choices[1] == "second") 
+                        else if (choices[1] == "second")
                             tileG.tiles[dice2 - 1].turned = true;
                         break;
                     case 3:
-                        if(choices[2] == "total")
+                        if (choices[2] == "total")
                             tileG.tiles[diceTotal - 1].turned = true;
-                        else if(choices[2] == "both")
+                        else if (choices[2] == "both")
                         {
                             tileG.tiles[dice1 - 1].turned = true;
                             tileG.tiles[dice2 - 1].turned = true;
                         }
-                        else if(choices[2] == "first")
+                        else if (choices[2] == "first")
                             tileG.tiles[dice1 - 1].turned = true;
-                        else if(choices[2] == "second") 
+                        else if (choices[2] == "second")
                             tileG.tiles[dice2 - 1].turned = true;
                         break;
                     case 4:
-                        if(choices[3] == "total")
+                        if (choices[3] == "total")
                             tileG.tiles[diceTotal - 1].turned = true;
-                        else if(choices[3] == "both")
+                        else if (choices[3] == "both")
                         {
                             tileG.tiles[dice1 - 1].turned = true;
                             tileG.tiles[dice2 - 1].turned = true;
                         }
-                        else if(choices[3] == "first")
+                        else if (choices[3] == "first")
                             tileG.tiles[dice1 - 1].turned = true;
-                        else if(choices[3] == "second") 
+                        else if (choices[3] == "second")
                             tileG.tiles[dice2 - 1].turned = true;
                         break;
 
@@ -807,7 +857,7 @@ namespace Arrays1
             int tileCount = 0;
             foreach (Tile t in tileG.tiles)
             {
-                if(t.turned == false)
+                if (t.turned == false)
                 {
                     tileCount++;
                 }
@@ -816,17 +866,17 @@ namespace Arrays1
             Console.WriteLine($"There are {tileCount} tiles remaining");
             Console.WriteLine();
 
-            if(tileCount >=3 && tileCount <= 6)
+            if (tileCount >= 3 && tileCount <= 6)
             {
                 Console.WriteLine("Gil won: 0");
                 // no need to touch the gil
             }
-            else if(tileCount >= 0 && tileCount <= 2)
+            else if (tileCount >= 0 && tileCount <= 2)
             {
                 Console.WriteLine($"Gil won: {gilToRisk}");
                 Controller.playerGil += gilToRisk;
             }
-            else if(tileCount >= 7)
+            else if (tileCount >= 7)
             {
                 Console.WriteLine($"Gil lost: {gilToRisk}");
                 Controller.playerGil -= gilToRisk;
@@ -836,11 +886,11 @@ namespace Arrays1
 
             string[] exitOptions = {
                 "Play Again",
-                "Exit",
+                "Back",
             };
             menu = new Menu(exitOptions);
 
-            switch(menu.GetInput())
+            switch (menu.GetInput())
             {
                 case 1:
                     if (Controller.playerGil > 0)
@@ -855,6 +905,9 @@ namespace Arrays1
         }
     }
 
+    /* 
+     * BlackJack handles the rendering and game play for the black jack game
+     */
     class BlackJack
     {
         double bet = 0;
@@ -864,9 +917,10 @@ namespace Arrays1
             bet = Controller.GetBet("Black Jack", "");
             PlayGame();
         }
+        
+        /* Rebuilds the screen and prints the cards */
         void BuildScreen(Deck deck, int playerTotal, List<Card> dealerCards, List<Card> playerCards)
         {
-
             Console.Clear();
             // print stuff for dealer
             Console.WriteLine();
@@ -882,6 +936,7 @@ namespace Arrays1
             Console.WriteLine();
         }
 
+        /* Allows player to either play again or go back after game is over */
         void RestartMenu()
         {
             string[] menuOptions =
@@ -892,7 +947,7 @@ namespace Arrays1
 
             Menu restartMenu = new Menu(menuOptions);
 
-            switch(restartMenu.GetInput())
+            switch (restartMenu.GetInput())
             {
                 case 1:
                     if (Controller.playerGil > 0)
@@ -906,6 +961,7 @@ namespace Arrays1
             }
         }
 
+        /* Player won the game. Print to screen and update gil */
         void Win()
         {
             Console.WriteLine();
@@ -918,12 +974,13 @@ namespace Arrays1
             RestartMenu();
         }
 
+        /* Player lost the game. Print to screen and update gil */
         void Loose(bool playerBust = false)
         {
             Console.WriteLine();
 
 
-            if(playerBust)
+            if (playerBust)
                 Console.WriteLine("YOU BUST!");
             else
                 Console.WriteLine("YOU LOOSE!");
@@ -935,6 +992,8 @@ namespace Arrays1
             RestartMenu();
         }
 
+        /* player hand was equal to the dealer hand and the result was a draw
+         * print to screen, but no need to update gil */
         void Draw()
         {
             Console.WriteLine();
@@ -945,7 +1004,13 @@ namespace Arrays1
             RestartMenu();
         }
 
-        int CaculateTotal(List<Card> cards)
+        /* Calculates the total value of a hand. 
+         * if an ace will make the hand bust it is counted as 1
+         * otherwise it is counted as 11
+         *
+         * aces must be handled last because we don't want its value to be sensitive to the positon in the hand
+         */
+        int CaculateTotal(List<Card> cards) 
         {
             int cTotal = 0;
 
@@ -962,10 +1027,10 @@ namespace Arrays1
 
             }
 
-            // figure out how to cont aces last
-            foreach(Card a in aces)
+            // figure out how to count aces last
+            foreach (Card a in aces)
             {
-                if(cTotal + 11 > 21)
+                if (cTotal + 11 > 21)
                 {
                     cTotal += 1;
                 }
@@ -978,6 +1043,8 @@ namespace Arrays1
             return cTotal;
         }
 
+        /* handles the rendering and game play for the game
+         * similar to CardShark and Shut the Box PlayGame methods, this needs refactored into smaller parts */
         void PlayGame()
         {
             bool playerBust = false;
@@ -1089,6 +1156,11 @@ namespace Arrays1
         }
     }
 
+    /* 
+     * Controller is the control point for all games
+     * Handles the rendering for the main menu and bet screens
+     * Tracks gil and kills the game if the player looses all money 
+     */
     static class Controller
     {
         static public double playerGil = 50; // player starts with 50 gil
@@ -1102,6 +1174,7 @@ namespace Arrays1
             "Exit",
         };
 
+        /* Renders the main menu and routes the appropriate game */
         static public void Render()
         {
             Utils.BuildScreen("Games");
@@ -1161,6 +1234,12 @@ namespace Arrays1
                     break;
             }
         }
+
+        /* Renders the scren where the user places a bet. Uses in each game 
+         * Error handling is built in to ensure the user does not:
+         * (1) bet more than they have
+         * (2) bet a 0 or negative 
+         */
         static public double GetBet(string header, string description, bool error = false)
         {
             double bet = 0;
@@ -1195,6 +1274,9 @@ namespace Arrays1
         }
 
 
+        /* Resets the player gil
+         * this can be run when the user looses all their money
+         */
         private static void Reset()
         {
             playerGil = 50;
@@ -1206,7 +1288,7 @@ namespace Arrays1
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8; // needed to make card symbols appear
-            Console.SetWindowSize(135, 40); // make sure we have room to stuff. TODO: adjust this
+            Console.SetWindowSize(135, 40); // make sure we have room for stuff
 
             Controller.Render();
 
