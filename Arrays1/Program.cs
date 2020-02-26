@@ -309,7 +309,7 @@ namespace Arrays1
                               "○ ...\n" +
                               "○ ...\n";
 
-            gilToRisk = Controller.GilScreen(header, description);
+            gilToRisk = Controller.GetBet(header, description);
             PlayGame();
         }
 
@@ -423,22 +423,17 @@ namespace Arrays1
 
             string[] exitOptions = new string[2];
 
-            if(Controller.playerGil > 0)
-            {
-                exitOptions[0] = "Play Again";
-                exitOptions[1] = "Exit";
-            }
-            else
-            {
-                exitOptions[0] = "Exit";
-            }
-
+            exitOptions[0] = "Play Again";
+            exitOptions[1] = "Exit";
             menu = new Menu(exitOptions);
 
             switch(menu.GetInput())
             {
                 case 1:
-                    Render();
+                    if (Controller.playerGil > 0)
+                        Render();
+                    else
+                        Controller.Render();
                     break;
                 case 2:
                     Controller.Render();
@@ -672,7 +667,7 @@ namespace Arrays1
                               "○ ...\n" +
                               "○ ...\n" +
                               "○ ...\n";
-            gilToRisk = Controller.GilScreen(header, description);
+            gilToRisk = Controller.GetBet(header, description);
             PlayGame();
         }
 
@@ -839,24 +834,19 @@ namespace Arrays1
 
             Console.WriteLine();
 
-            string[] exitOptions = new string[2];
-
-            if (Controller.playerGil > 0)
-            {
-                exitOptions[0] = "Play Again";
-                exitOptions[1] = "Exit";
-            }
-            else
-            {
-                exitOptions[0] = "Exit";
-            }
-
+            string[] exitOptions = {
+                "Play Again",
+                "Exit",
+            };
             menu = new Menu(exitOptions);
 
             switch(menu.GetInput())
             {
                 case 1:
-                    Render();
+                    if (Controller.playerGil > 0)
+                        Render();
+                    else
+                        Controller.Render();
                     break;
                 case 2:
                     Controller.Render();
@@ -1171,57 +1161,6 @@ namespace Arrays1
                     break;
             }
         }
-        static public double GilScreen(string header, string description, bool error = false, bool toSmall = false, bool toMuch = false)
-        {
-            double gilToRisk;
-
-            Utils.BuildScreen(header);
-
-            Console.WriteLine();
-            Console.WriteLine(description);
-            Console.WriteLine();
-            Utils.Divider('_', 50);
-
-            Console.WriteLine();
-            Console.WriteLine($"You currently have {Controller.playerGil} gil");
-            Console.WriteLine();
-
-
-            if (error)
-            {
-                Console.WriteLine("Invalid entry");
-            }
-            else if (toSmall)
-            {
-                Console.WriteLine("You cannot risk 0 gil!");
-            }
-            else if (toMuch)
-            {
-                Console.WriteLine("You cannot risk more gil than you have!");
-            }
-
-            Console.Write("Enter amount of gil to risk: ");
-
-            if (!double.TryParse(Console.ReadLine(), out gilToRisk))
-            {
-                GilScreen(header, description, true);
-            }
-
-            if (gilToRisk <= 0)
-            {
-                GilScreen(header, description, false, true);
-            }
-
-            if (gilToRisk > Controller.playerGil)
-            {
-                GilScreen(header, description, false, false, true);
-            }
-
-            if (Controller.playerGil <= 0)
-                Controller.Render();
-
-            return gilToRisk;
-        }
         static public double GetBet(string header, string description, bool error = false)
         {
             double bet = 0;
@@ -1248,7 +1187,7 @@ namespace Arrays1
 
             if (!double.TryParse(Console.ReadLine(), out bet) || bet <= 0 || bet > Controller.playerGil)
             {
-                GetBet(header, description, true);
+                return GetBet(header, description, true);
             }
 
             return bet;
@@ -1267,7 +1206,7 @@ namespace Arrays1
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8; // needed to make card symbols appear
-            Console.SetWindowSize(130, 35); // make sure we have room to stuff. TODO: adjust this
+            Console.SetWindowSize(135, 40); // make sure we have room to stuff. TODO: adjust this
 
             Controller.Render();
 
