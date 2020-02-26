@@ -871,45 +871,9 @@ namespace Arrays1
 
         public void Render()
         {
-            GilScreen();
+            bet = Controller.GetBet("Black Jack", "");
             PlayGame();
         }
-
-        void GilScreen()
-        {
-            Utils.BuildScreen("Black Jack");
-
-            Console.WriteLine("Welcome to Black Jack!");
-            Console.WriteLine();
-            Console.WriteLine("Press any key to continue");
-
-            Console.ReadKey();
-
-        }
-
-        void GetBet(bool error = false)
-        {
-            Console.Clear();
-
-            Utils.BuildScreen("Black Jack");
-
-            if(error)
-            {
-                Console.WriteLine("Invalid entry");
-            }
-            Console.WriteLine();
-            Console.WriteLine($"You currently have {Controller.playerGil.ToString("F")} gil");
-            Console.WriteLine();
-
-            Console.Write("Gil to bet: ");
-
-            if(!double.TryParse(Console.ReadLine(), out bet) || bet <= 0 || bet > Controller.playerGil)
-            {
-                GetBet(true);
-            }
-
-        }
-
         void BuildScreen(Deck deck, int playerTotal, List<Card> dealerCards, List<Card> playerCards)
         {
 
@@ -928,12 +892,107 @@ namespace Arrays1
             Console.WriteLine();
         }
 
+        void RestartMenu()
+        {
+            string[] menuOptions =
+            {
+                "Play Again",
+                "Back",
+            };
+
+            Menu restartMenu = new Menu(menuOptions);
+
+            switch(restartMenu.GetInput())
+            {
+                case 1:
+                    if (Controller.playerGil > 0)
+                        Render();
+                    else
+                        Controller.Render();
+                    break;
+                case 2:
+                    Controller.Render();
+                    break;
+            }
+        }
+
+        void Win()
+        {
+            Console.WriteLine();
+
+            Console.WriteLine("YOU WIN!");
+            Console.WriteLine($"Gil won: {bet}");
+
+            Controller.playerGil += bet;
+
+            RestartMenu();
+        }
+
+        void Loose(bool playerBust = false)
+        {
+            Console.WriteLine();
+
+
+            if(playerBust)
+                Console.WriteLine("YOU BUST!");
+            else
+                Console.WriteLine("YOU LOOSE!");
+
+            Console.WriteLine($"Gil lost: {bet}");
+
+            Controller.playerGil -= bet;
+
+            RestartMenu();
+        }
+
+        void Draw()
+        {
+            Console.WriteLine();
+
+            Console.WriteLine("DRAW!");
+            Console.WriteLine($"Gil won: 0");
+
+            RestartMenu();
+        }
+
+        int CaculateTotal(List<Card> cards)
+        {
+            int cTotal = 0;
+
+            List<Card> aces = new List<Card>();
+
+            foreach (Card c in cards)
+            {
+                if (c.DisplayVal == "A")
+                {
+                    aces.Add(c);
+                    continue;
+                }
+                cTotal += c.Num;
+
+            }
+
+            // figure out how to cont aces last
+            foreach(Card a in aces)
+            {
+                if(cTotal + 11 > 21)
+                {
+                    cTotal += 1;
+                }
+                else
+                {
+                    cTotal += 11;
+                }
+            }
+
+            return cTotal;
+        }
+
         void PlayGame()
         {
-            GetBet();
-
             bool playerBust = false;
             int playerTotal = 0;
+            int dealerTotal = 0;
 
             Deck deck = new Deck(true);
             Menu menu;
@@ -947,18 +1006,14 @@ namespace Arrays1
             // we want one of the dealer cards to be visible
             dealerCards[0].hidden = false;
 
-            List<Card> playerCards = playCards.Skip(playCards.Length / 2).ToList() ;
+            List<Card> playerCards = playCards.Skip(playCards.Length / 2).ToList();
             // we want both the player cards to be visible
-            playerCards[0].hidden = false; 
+            playerCards[0].hidden = false;
             playerCards[1].hidden = false;
 
-            playerTotal = 0;
-            foreach (Card c in playerCards)
-            {
-                playerTotal += c.Num;
-            }
+            playerTotal = CaculateTotal(playerCards);
 
-            while(!playerBust)
+            while (true)
             {
                 BuildScreen(deck, playerTotal, dealerCards, playerCards);
 
@@ -970,34 +1025,76 @@ namespace Arrays1
                 menu = new Menu(menuOptions);
                 int input = menu.GetInput();
 
-                if(input == 1)
+                if (input == 1) // the player hits
                 {
                     // inefficient
                     deck.Shuffle();
                     Card newC = deck.SelectCards(1)[0];
                     newC.hidden = false;
                     playerCards.Add(newC);
-                       
-                    playerTotal = 0;
-                    foreach (Card c in playerCards)
-                    {
-                        playerTotal += c.Num;
-                    }
 
-                    if(playerTotal > 21)
+                    playerTotal = CaculateTotal(playerCards);
+
+                    if (playerTotal > 21)
                     {
                         playerBust = true;
                         BuildScreen(deck, playerTotal, dealerCards, playerCards);
-                        Console.WriteLine("YOU BUST!");
+                        break;
                     }
 
                 }
-                else if(input == 2)
+                else if (input == 2) // the player stands. at this point we want to have the dealer play and get out of the loop
                 {
+                    // first thing we want to do is display and count all the dealer cards
+                    dealerTotal = CaculateTotal(dealerCards);
+                    foreach (Card c in dealerCards)
+                    {
+                        c.hidden = false;
+                    }
+
+                    while (dealerTotal < 17) // the dealer grabs a card as long as his total is less than 17
+                    {
+                        deck.Shuffle();
+                        Card newC = deck.SelectCards(1)[0];
+                        newC.hidden = false;
+                        dealerCards.Add(newC);
+                        dealerTotal = CaculateTotal(dealerCards);
+                    }
+
+                    BuildScreen(deck, playerTotal, dealerCards, playerCards);
+
+                    playerBust = false;
                     break;
                 }
 
+
             }
+
+            Console.WriteLine();
+            Console.WriteLine($"Your Total: {playerTotal}");
+
+            if (!playerBust)
+                Console.WriteLine($"Dealer Total: {dealerTotal} ");
+
+            bool dealerBust = (dealerTotal > 21 && !playerBust);
+            if (dealerBust) // the dealer bust
+            {
+                Console.Write("DEALER BUSTS!");
+            }
+
+            if (playerBust || ((playerTotal < dealerTotal) && !dealerBust))
+            {
+                Loose(playerBust);
+            }
+            else if ((dealerTotal < playerTotal) || dealerBust)
+            {
+                Win();
+            }
+            else if (dealerTotal == playerTotal)
+            {
+                Draw();
+            }
+
 
         }
     }
@@ -1022,9 +1119,9 @@ namespace Arrays1
 
             Console.WriteLine();
 
-            if(playerGil <= 0)
+            if (playerGil <= 0)
             {
-                string[] exitMenu = { 
+                string[] exitMenu = {
                     "Reset Games and Play Again",
                     "Exit",
                 };
@@ -1032,7 +1129,7 @@ namespace Arrays1
 
                 menu = new Menu(exitMenu);
 
-                switch(menu.GetInput())
+                switch (menu.GetInput())
                 {
                     case 1:
                         Reset();
@@ -1052,7 +1149,7 @@ namespace Arrays1
                 Console.WriteLine($"You reached your goal of {GIL_GOAL}!");
 
 
-           menu = new Menu(menuItems);
+            menu = new Menu(menuItems);
 
             Console.WriteLine();
             Console.WriteLine();
@@ -1094,36 +1191,70 @@ namespace Arrays1
             {
                 Console.WriteLine("Invalid entry");
             }
-            else if(toSmall)
+            else if (toSmall)
             {
                 Console.WriteLine("You cannot risk 0 gil!");
             }
-            else if(toMuch)
+            else if (toMuch)
             {
                 Console.WriteLine("You cannot risk more gil than you have!");
             }
 
             Console.Write("Enter amount of gil to risk: ");
 
-            if(!double.TryParse(Console.ReadLine(), out gilToRisk)) {
+            if (!double.TryParse(Console.ReadLine(), out gilToRisk))
+            {
                 GilScreen(header, description, true);
             }
 
-            if(gilToRisk <= 0)
+            if (gilToRisk <= 0)
             {
                 GilScreen(header, description, false, true);
             }
 
-            if(gilToRisk > Controller.playerGil)
+            if (gilToRisk > Controller.playerGil)
             {
                 GilScreen(header, description, false, false, true);
             }
 
-            if(Controller.playerGil <= 0)
+            if (Controller.playerGil <= 0)
                 Controller.Render();
 
             return gilToRisk;
         }
+        static public double GetBet(string header, string description, bool error = false)
+        {
+            double bet = 0;
+
+            Console.Clear();
+
+            Utils.BuildScreen(header);
+
+            Console.WriteLine();
+            Console.WriteLine(description);
+            Console.WriteLine();
+            Utils.Divider('_', 50);
+
+            Console.WriteLine();
+            Console.WriteLine($"You currently have {Controller.playerGil.ToString("F")} gil");
+            Console.WriteLine();
+
+            if (error)
+            {
+                Console.WriteLine("Invalid entry");
+            }
+
+            Console.Write("Gil to bet: ");
+
+            if (!double.TryParse(Console.ReadLine(), out bet) || bet <= 0 || bet > Controller.playerGil)
+            {
+                GetBet(header, description, true);
+            }
+
+            return bet;
+
+        }
+
 
         private static void Reset()
         {
